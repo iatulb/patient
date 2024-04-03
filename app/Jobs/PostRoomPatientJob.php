@@ -23,7 +23,7 @@ class PostRoomPatientJob extends Job
     public function handle()
     {
         if ($this->attempts() >= 0) {
-            $connection = new AMQPStreamConnection('host.docker.internal', 5672, 'guest', 'guest');
+            $connection = new AMQPStreamConnection(env('DB_HOST'), 5672, 'guest', 'guest');
         $channel = $connection->channel();
 
         $channel->queue_declare($this->queueName, false, false, false, false);

@@ -33,13 +33,13 @@ class PatientController extends Controller
         $patient = \App\Models\Patient::create($parameters);
 
         if (!empty($request->input('room_id'))) {
-            $connection = new AMQPStreamConnection('host.docker.internal', 5672, 'guest', 'guest');
+            $connection = new AMQPStreamConnection(env('DB_HOST'), 5672, 'guest', 'guest');
             $channel = $connection->channel();
     
             $channel->queue_declare($this->queueName, false, false, false, false);
     
             $payload = [];
-            $payload['url'] = 'http://host.docker.internal:8001/api/roompatient';
+            $payload['url'] = 'http://'. env('DB_HOST') .':8001/api/roompatient';
             $payload['payload'] = [
                 'room_id' => $request->input('room_id'),
                 'patient_id' => $patient->id,
