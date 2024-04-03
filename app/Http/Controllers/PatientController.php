@@ -39,7 +39,7 @@ class PatientController extends Controller
             $channel->queue_declare($this->queueName, false, false, false, false);
     
             $payload = [];
-            $payload['url'] = 'http://localhost:8001/api/roompatient';
+            $payload['url'] = 'http://host.docker.internal:8001/api/roompatient';
             $payload['payload'] = [
                 'room_id' => $request->input('room_id'),
                 'patient_id' => $patient->id,
