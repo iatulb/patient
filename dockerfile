@@ -1,5 +1,8 @@
 FROM composer:latest
 
+LABEL maintainer="Atul BAJARE"
+LABEL service="Hospital Service"
+
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 RUN apk add --no-cache linux-headers
 RUN docker-php-ext-install sockets

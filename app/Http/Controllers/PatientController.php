@@ -8,7 +8,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class PatientController extends Controller
 {
-    private $queueName = "PostRoomToPatient";
+    private $queuePostRoomToPatient = "PostRoomToPatient";
+    private $queuePostPatientToDoctor = "PostPatientToDoctor";
 
     /**
      * Create a new controller instance.
@@ -36,7 +37,7 @@ class PatientController extends Controller
             $connection = new AMQPStreamConnection(env('DB_HOST'), 5672, 'guest', 'guest');
             $channel = $connection->channel();
     
-            $channel->queue_declare($this->queueName, false, false, false, false);
+            $channel->queue_declare($this->queuePostRoomToPatient, false, false, false, false);
     
             $payload = [];
             $payload['url'] = 'http://'. env('DB_HOST') .':8001/api/roompatient';
@@ -46,13 +47,36 @@ class PatientController extends Controller
                 'admit_date' => date("Y-m-d h:i:s")
             ];
             $msg = new AMQPMessage(json_encode($payload), ['content_type' => 'application/json']);
-            $channel->basic_publish($msg, '', $this->queueName);
+            $channel->basic_publish($msg, '', $this->queuePostRoomToPatient);
     
             $channel->close();
             $connection->close();                
 
             //create job
-            $job = (new \App\Jobs\PostRoomPatientJob($this->queueName));
+            $job = (new \App\Jobs\PostRoomPatientJob($this->queuePostRoomToPatient));
+            dispatch($job);
+        }
+
+        if (!empty($request->input('doctor_id'))) {            
+            $connection = new AMQPStreamConnection(env('DB_HOST'), 5672, 'guest', 'guest');
+            $channel = $connection->channel();
+    
+            $channel->queue_declare($this->queuePostRoomToPatient, false, false, false, false);
+    
+            $payload = [];
+            $payload['url'] = 'http://'. env('DB_HOST') .':8003/api/doctorpatient';
+            $payload['payload'] = [
+                'doctor_id' => $request->input('doctor_id'),
+                'patient_id' => $patient->id
+            ];
+            $msg = new AMQPMessage(json_encode($payload), ['content_type' => 'application/json']);
+            $channel->basic_publish($msg, '', $this->queuePostRoomToPatient);
+    
+            $channel->close();
+            $connection->close();                
+
+            //create job
+            $job = (new \App\Jobs\PostDoctorPatientJob($this->queuePostRoomToPatient));
             dispatch($job);
         }
 
